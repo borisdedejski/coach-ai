@@ -1,3 +1,10 @@
 textblob
 fastapi
 uvicorn
+agno
+openai
+sqlalchemy 
+asyncpg 
+psycopg2-binary 
+alembic
+greenlet
