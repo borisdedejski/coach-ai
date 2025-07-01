@@ -13,3 +13,4 @@ class JournalEntry(Base):
     mood = Column(String)
     sentiment_score = Column(Float)
     timestamp = Column(DateTime, default=datetime.utcnow)
+    reflection_question = Column(String, nullable=True)
