@@ -1,6 +1,7 @@
 from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional
+from typing import List, Dict, Union
 
 class MoodResponse(BaseModel):
     mood: str
@@ -23,3 +24,13 @@ class JournalEntryResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class InsightsResponse(BaseModel):
+    average_sentiment_score: float
+    most_common_mood: str
+    mood_trend: str
+    entry_streak_days: int
+    total_entries: int
+    last_entry_date: Optional[datetime]
+    progress_trend: List[Dict[str, Union[str, float]]]
