@@ -14,3 +14,5 @@ class JournalEntry(Base):
     sentiment_score = Column(Float)
     timestamp = Column(DateTime, default=datetime.utcnow)
     reflection_question = Column(String, nullable=True)
+    progress_summary = Column(String, nullable=True)
+    progress_score = Column(Float, nullable=True)
