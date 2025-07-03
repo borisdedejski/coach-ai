@@ -11,3 +11,9 @@ greenlet
 alembic
 chainlit
 requests
+sentence-transformers 
+langchain
+langchain_openai
+chromadb
+plotly 
+scikit-learn

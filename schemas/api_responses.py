@@ -19,6 +19,10 @@ class ChatResponse(BaseModel):
     reflection_question: Optional[str] = None
     progress_summary: Optional[str] = None
     progress_score: Optional[float] = None
+    # RAG metadata
+    used_knowledge_base: Optional[bool] = None
+    similarity_score: Optional[float] = None
+    knowledge_context: Optional[str] = None
 
 
 class JournalEntryResponse(BaseModel):

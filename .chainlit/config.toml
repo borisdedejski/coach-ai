@@ -2,6 +2,9 @@
 # Whether to enable telemetry (default: true). No personal data is collected.
 enable_telemetry = true
 
+# Disable database features to avoid connection errors
+[database]
+enabled = false
 
 # List of environment variables to be provided by each user to use the app.
 user_env = []

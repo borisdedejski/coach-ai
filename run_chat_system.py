@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Helper script to run the complete chat system
+Helper script to run the complete chat system with ChromaDB RAG
 """
 import subprocess
 import time
@@ -15,6 +15,59 @@ def check_server_running():
         response = requests.get("http://localhost:8000/docs", timeout=2)
         return response.status_code == 200
     except:
+        return False
+
+def setup_chroma():
+    """Set up ChromaDB vector store if not already set up"""
+    print("🔍 Checking ChromaDB vector store...")
+    
+    chroma_db_path = Path("knowledge/embeddings/chroma_db")
+    embeddings_path = Path("knowledge/embeddings/mental_health_embeddings.npy")
+    
+    if chroma_db_path.exists() and any(chroma_db_path.iterdir()):
+        print("✅ ChromaDB already exists")
+        return True
+    
+    if not embeddings_path.exists():
+        print("⚠️  Knowledge base not indexed. Running index_knowledge_base.py...")
+        try:
+            result = subprocess.run([sys.executable, "scripts/index_knowledge_base.py"], 
+                                  capture_output=True, text=True, timeout=60)
+            if result.returncode != 0:
+                print(f"❌ Failed to index knowledge base: {result.stderr}")
+                return False
+            print("✅ Knowledge base indexed successfully")
+        except Exception as e:
+            print(f"❌ Error indexing knowledge base: {e}")
+            return False
+    
+    print("🔧 Setting up ChromaDB vector store...")
+    try:
+        result = subprocess.run([sys.executable, "scripts/setup_chroma.py"], 
+                              capture_output=True, text=True, timeout=60)
+        if result.returncode != 0:
+            print(f"❌ Failed to setup ChromaDB: {result.stderr}")
+            return False
+        print("✅ ChromaDB vector store setup complete")
+        return True
+    except Exception as e:
+        print(f"❌ Error setting up ChromaDB: {e}")
+        return False
+
+def test_rag_system():
+    """Test RAG system functionality"""
+    print("🧪 Testing RAG system...")
+    try:
+        result = subprocess.run([sys.executable, "test_chroma_demo.py"], 
+                              capture_output=True, text=True, timeout=30)
+        if result.returncode == 0:
+            print("✅ RAG system test passed")
+            return True
+        else:
+            print(f"⚠️  RAG system test failed: {result.stderr}")
+            return False
+    except Exception as e:
+        print(f"⚠️  Could not test RAG system: {e}")
         return False
 
 def start_server():
@@ -49,7 +102,12 @@ def start_chainlit():
     """Start the Chainlit chat interface"""
     print("\n🎨 Starting Chainlit chat interface...")
     try:
-        subprocess.run([sys.executable, "-m", "chainlit", "run", "chat_agent.py", "--port", "8001"])
+        # Set environment variable to disable Chainlit database
+        env = os.environ.copy()
+        env['CHAINLIT_DISABLE_DATABASE'] = 'true'
+        
+        subprocess.run([sys.executable, "-m", "chainlit", "run", "chat_agent.py", "--port", "8001"], 
+                      env=env)
     except KeyboardInterrupt:
         print("\n👋 Chat session ended")
     except Exception as e:
@@ -57,8 +115,15 @@ def start_chainlit():
 
 def main():
     """Main function to run the complete system"""
-    print("🤖 AI Coach Chat System")
-    print("=" * 40)
+    print("🤖 AI Coach Chat System with ChromaDB RAG")
+    print("=" * 50)
+    
+    # Set up ChromaDB vector store
+    if not setup_chroma():
+        print("⚠️  ChromaDB setup failed, but continuing with system startup...")
+    
+    # Test RAG system (optional)
+    test_rag_system()
     
     # Check if server is already running
     if check_server_running():
