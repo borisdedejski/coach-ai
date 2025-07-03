@@ -25,10 +25,15 @@ if page == "New Entry":
 
             if res.status_code == 200:
                 data = res.json()
-                st.success(f"Mood detected: **{data['mood']}** (score: {data['sentiment_score']:.2f})")
-                st.markdown(f"**Reflection Question:** {data['reflection_question']}")
-                st.markdown(f"**Progress Summary:** {data['progress_summary']}")
-                st.markdown(f"**Progress Score:** {data['progress_score']:.2f}")
+                st.success(f"**Response:** {data['reply']}")
+                st.info(f"**Intent:** {data['intent']}")
+                
+                # Only show mood-related info if it's a mood-related response
+                if data.get('mood'):
+                    st.success(f"Mood detected: **{data['mood']}** (score: {data['sentiment_score']:.2f})")
+                    st.markdown(f"**Reflection Question:** {data['reflection_question']}")
+                    st.markdown(f"**Progress Summary:** {data['progress_summary']}")
+                    st.markdown(f"**Progress Score:** {data['progress_score']:.2f}")
             else:
                 st.error("Something went wrong with the request.")
 

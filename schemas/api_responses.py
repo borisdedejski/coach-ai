@@ -11,6 +11,16 @@ class MoodResponse(BaseModel):
     progress_score: Optional[float] = None
 
 
+class ChatResponse(BaseModel):
+    reply: str
+    intent: str
+    mood: Optional[str] = None
+    sentiment_score: Optional[float] = None
+    reflection_question: Optional[str] = None
+    progress_summary: Optional[str] = None
+    progress_score: Optional[float] = None
+
+
 class JournalEntryResponse(BaseModel):
     id: int
     user_id: str
