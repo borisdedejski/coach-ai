@@ -49,6 +49,22 @@ async def send_chat_message(text: str, user_id: str = USER_ID) -> Dict[str, Any]
             "progress_score": None
         }
 
+async def get_enhanced_progress(user_id: str = USER_ID) -> Dict[str, Any]:
+    """Get enhanced progress analysis with patterns and trends"""
+    try:
+        response = requests.get(
+            f"{BASE_URL}/progress/{user_id}/enhanced",
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return None
+    except Exception as e:
+        print(f"Error fetching enhanced progress: {e}")
+        return None
+
 async def stream_response(response_data: Dict[str, Any]):
     """Stream the response in a natural way"""
     reply = response_data.get("reply", "No response received")
@@ -80,9 +96,77 @@ async def stream_response(response_data: Dict[str, Any]):
     
     await msg.update()
 
+async def display_enhanced_progress(progress_data: Dict[str, Any]):
+    """Display enhanced progress analysis with patterns and trends"""
+    if not progress_data or not progress_data.get("patterns"):
+        return
+    
+    patterns = progress_data["patterns"]
+    
+    # Create a detailed progress message
+    progress_msg = "## 📊 **Enhanced Progress Analysis**\n\n"
+    
+    # Mood Direction
+    mood_direction = patterns.get("mood_direction", {})
+    if mood_direction.get("direction") != "insufficient_data":
+        direction = mood_direction.get("direction", "stable")
+        stability = mood_direction.get("stability", "unknown")
+        progress_msg += f"**Overall Mood Direction:** {direction.replace('_', ' ').title()}\n"
+        progress_msg += f"**Mood Stability:** {stability.replace('_', ' ').title()}\n\n"
+    
+    # Day of Week Patterns
+    day_patterns = patterns.get("day_patterns", {})
+    if day_patterns:
+        progress_msg += "**📅 Day-of-Week Patterns:**\n"
+        for day, data in day_patterns.items():
+            avg_sentiment = data.get("avg_sentiment", 0)
+            common_mood = data.get("most_common_mood", "unknown")
+            entry_count = data.get("entry_count", 0)
+            progress_msg += f"• **{day}:** {common_mood} (avg score: {avg_sentiment:.2f}, {entry_count} entries)\n"
+        progress_msg += "\n"
+    
+    # Trend Analysis
+    trend_analysis = patterns.get("trend_analysis", {})
+    if trend_analysis.get("trend") == "analyzed":
+        direction = trend_analysis.get("direction", "stable")
+        change_mag = trend_analysis.get("change_magnitude", 0)
+        progress_msg += f"**📈 Recent Trend:** {direction.title()} (change: {change_mag:.2f})\n\n"
+    
+    # Trigger Analysis
+    trigger_analysis = patterns.get("trigger_analysis", {})
+    most_frequent = trigger_analysis.get("most_frequent", [])
+    if most_frequent:
+        progress_msg += "**🎯 Frequent Themes:**\n"
+        for trigger in most_frequent:
+            trigger_name = trigger.replace("_", " ").title()
+            progress_msg += f"• {trigger_name}\n"
+        progress_msg += "\n"
+    
+    # Progress Score
+    if progress_data.get("score") is not None:
+        progress_msg += f"**📊 Progress Score:** {progress_data['score']:.2f}/1.0\n"
+    
+    await cl.Message(content=progress_msg).send()
+
+@cl.action_callback("show_progress")
+async def on_show_progress(action):
+    """Handle the show progress action"""
+    await cl.Message(content="📊 Analyzing your progress patterns...").send()
+    
+    progress_data = await get_enhanced_progress()
+    if progress_data:
+        await display_enhanced_progress(progress_data)
+    else:
+        await cl.Message(content="❌ Unable to fetch progress data. Please try again later.").send()
+
 @cl.on_message
 async def main(message: cl.Message):
     """Main chat handler that uses the FastAPI chat endpoint with streaming"""
+    
+    # Check if this is a command
+    if message.content.lower().startswith("/progress") or message.content.lower().startswith("show progress"):
+        await on_show_progress(None)
+        return
     
     typing_msg = cl.Message(content="🤔 Processing your message...")
     await typing_msg.send()
@@ -93,12 +177,21 @@ async def main(message: cl.Message):
     
     # Stream the response
     await stream_response(response_data)
+    
+    # If this was a mood-related entry, show enhanced progress analysis
+    if response_data.get("mood") and response_data.get("intent") != "error":
+        await cl.sleep(1.0)  # Pause before showing progress analysis
+        
+        # Get enhanced progress data
+        progress_data = await get_enhanced_progress()
+        if progress_data:
+            await display_enhanced_progress(progress_data)
 
 @cl.on_chat_start
 async def start():
     """Initialize the chat session"""
     await cl.Message(
-        content="Hello! I'm your AI Coach. I'm here to help you reflect on your emotions and mental well-being. Share how you're feeling today, and I'll provide personalized insights and reflection questions based on your mood history."
+        content="Hello! I'm your AI Coach. I'm here to help you reflect on your emotions and mental well-being. Share how you're feeling today, and I'll provide personalized insights and reflection questions based on your mood history.\n\n💡 **Tip:** Type '/progress' or 'show progress' to see detailed analysis of your mood patterns and trends."
     ).send()
 
 @cl.on_chat_end

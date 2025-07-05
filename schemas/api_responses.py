@@ -40,6 +40,19 @@ class JournalEntryResponse(BaseModel):
         from_attributes = True
 
 
+class ProgressPatternsResponse(BaseModel):
+    day_patterns: Dict[str, Dict[str, Union[str, float, int]]]
+    trend_analysis: Dict[str, Union[str, float]]
+    trigger_analysis: Dict[str, Union[List[str], Dict[str, int], int]]
+    mood_direction: Dict[str, Union[str, float]]
+
+
+class EnhancedProgressResponse(BaseModel):
+    summary: Optional[str] = None
+    score: Optional[float] = None
+    patterns: Optional[ProgressPatternsResponse] = None
+
+
 class InsightsResponse(BaseModel):
     average_sentiment_score: float
     most_common_mood: str
