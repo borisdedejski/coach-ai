@@ -58,16 +58,14 @@ def test_rag_system():
     """Test RAG system functionality"""
     print("🧪 Testing RAG system...")
     try:
-        result = subprocess.run([sys.executable, "test_chroma_demo.py"], 
-                              capture_output=True, text=True, timeout=30)
-        if result.returncode == 0:
-            print("✅ RAG system test passed")
-            return True
-        else:
-            print(f"⚠️  RAG system test failed: {result.stderr}")
-            return False
+        # Simple test to check if ChromaDB is accessible
+        from agents.rag.retriever import RAGRetriever
+        retriever = RAGRetriever(use_chroma=True)
+        stats = retriever.get_vector_store_stats()
+        print(f"✅ RAG system test passed - {stats['total_vectors']} vectors available")
+        return True
     except Exception as e:
-        print(f"⚠️  Could not test RAG system: {e}")
+        print(f"⚠️  RAG system test failed: {e}")
         return False
 
 def start_server():

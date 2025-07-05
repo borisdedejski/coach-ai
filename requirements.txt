@@ -17,3 +17,5 @@ langchain_openai
 chromadb
 plotly 
 scikit-learn
+datasets
+pandas

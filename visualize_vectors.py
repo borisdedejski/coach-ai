@@ -170,6 +170,68 @@ def create_pca_visualization(vectors, documents, metadatas, ids):
     
     return fig
 
+def create_3d_visualization(vectors, documents, metadatas, ids):
+    """Create 3D visualization using t-SNE"""
+    print("🎨 Creating 3D visualization...")
+    
+    # Prepare data
+    doc_types = [meta.get('source', 'unknown') for meta in metadatas]
+    doc_ids = [f"chunk_{i}" for i in range(len(documents))]
+    
+    # Create colors based on document types
+    unique_types = list(set(doc_types))
+    color_map = {doc_type: i for i, doc_type in enumerate(unique_types)}
+    colors = [color_map[doc_type] for doc_type in doc_types]
+    
+    # Reduce dimensionality to 3D using t-SNE
+    print("🔧 Reducing dimensions with t-SNE to 3D...")
+    tsne = TSNE(n_components=3, random_state=42, perplexity=min(30, len(vectors)-1))
+    reduced_vectors = tsne.fit_transform(vectors)
+    
+    # Create the 3D scatter plot
+    fig = go.Figure(data=[go.Scatter3d(
+        x=reduced_vectors[:, 0],
+        y=reduced_vectors[:, 1],
+        z=reduced_vectors[:, 2],
+        mode='markers+text',
+        marker=dict(
+            size=8, 
+            color=colors, 
+            opacity=0.8,
+            colorscale='viridis',
+            showscale=True,
+            colorbar=dict(title="Document Type")
+        ),
+        text=doc_ids,
+        textposition="middle center",
+        textfont=dict(size=8),
+        hovertemplate="<b>ID:</b> %{text}<br>" +
+                     "<b>Type:</b> %{customdata[0]}<br>" +
+                     "<b>Content:</b> %{customdata[1]}<br>" +
+                     "<b>X:</b> %{x:.3f}<br>" +
+                     "<b>Y:</b> %{y:.3f}<br>" +
+                     "<b>Z:</b> %{z:.3f}<extra></extra>",
+        customdata=list(zip(doc_types, [doc[:100] + "..." for doc in documents]))
+    )])
+    
+    fig.update_layout(
+        title='ChromaDB Vector Store - 3D t-SNE Visualization',
+        scene=dict(
+            xaxis_title='t-SNE Dimension 1',
+            yaxis_title='t-SNE Dimension 2',
+            zaxis_title='t-SNE Dimension 3',
+            camera=dict(
+                eye=dict(x=1.5, y=1.5, z=1.5)
+            )
+        ),
+        width=1000,
+        height=700,
+        margin=dict(r=20, b=10, l=10, t=40),
+        showlegend=False
+    )
+    
+    return fig
+
 def create_similarity_heatmap(vectors, documents, ids):
     """Create similarity heatmap between vectors"""
     print("🔥 Creating similarity heatmap...")
@@ -328,13 +390,18 @@ def main():
         fig_pca = create_pca_visualization(vectors, documents, metadatas, ids)
         fig_pca.show()
         
-        # 3. Similarity heatmap
-        print("\n3️⃣ Creating similarity heatmap...")
+        # 3. 3D visualization
+        print("\n3️⃣ Creating 3D visualization...")
+        fig_3d = create_3d_visualization(vectors, documents, metadatas, ids)
+        fig_3d.show()
+        
+        # 4. Similarity heatmap
+        print("\n4️⃣ Creating similarity heatmap...")
         fig_heatmap = create_similarity_heatmap(vectors, documents, ids)
         fig_heatmap.show()
         
-        # 4. Comprehensive visualization
-        print("\n4️⃣ Creating comprehensive visualization...")
+        # 5. Comprehensive visualization
+        print("\n5️⃣ Creating comprehensive visualization...")
         fig_comprehensive = create_comprehensive_visualization(vectors, documents, metadatas, ids)
         fig_comprehensive.show()
         
@@ -342,8 +409,10 @@ def main():
         print("💡 Tips:")
         print("   - t-SNE shows local structure and clusters")
         print("   - PCA shows global variance patterns")
+        print("   - 3D t-SNE provides depth and better cluster separation")
         print("   - Heatmap shows pairwise similarities")
         print("   - Vector norms show embedding magnitudes")
+        print("   - You can rotate and zoom the 3D plot interactively")
         
     except Exception as e:
         print(f"❌ Error creating visualizations: {e}")

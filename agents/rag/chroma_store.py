@@ -133,6 +133,46 @@ class ChromaVectorStore:
             print(f"❌ Error searching ChromaDB: {e}")
             return []
     
+    def add_chunks(self, chunks: List[str], source: str = "dataset"):
+        """
+        Add pre-chunked documents to the vector store
+        
+        Args:
+            chunks: List of pre-chunked document texts
+            source: Source identifier for the chunks
+        """
+        if not chunks:
+            return
+        
+        # Add to ChromaDB
+        documents_to_add = []
+        metadatas = []
+        ids = []
+        
+        start_id = self.collection.count()
+        
+        for i, chunk in enumerate(chunks):
+            documents_to_add.append(chunk)
+            metadatas.append({"source": source, "chunk_id": start_id + i})
+            ids.append(f"chunk_{start_id + i}")
+        
+        # Add to collection
+        self.collection.add(
+            documents=documents_to_add,
+            metadatas=metadatas,
+            ids=ids
+        )
+        
+        # Update chunks list
+        self.chunks.extend(chunks)
+        
+        # Save updated chunks
+        chunks_path = os.path.join(self.embeddings_dir, "mental_health_chunks.json")
+        with open(chunks_path, 'w') as f:
+            json.dump(self.chunks, f)
+        
+        print(f"✅ Added {len(chunks)} new chunks to ChromaDB")
+    
     def add_documents(self, documents: List[str], chunk_size: int = 500, chunk_overlap: int = 50):
         """
         Add new documents to the vector store
