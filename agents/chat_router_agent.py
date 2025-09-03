@@ -24,21 +24,39 @@ response_agent = Agent(
 )
 
 async def get_user_history_context(user_id: str, db: AsyncSession, limit: int = 3) -> str:
-    """Get user history context for intent detection"""
-    query = select(JournalEntry).where(
-        JournalEntry.user_id == user_id
-    ).order_by(desc(JournalEntry.timestamp)).limit(limit)
-    
-    result = await db.execute(query)
-    entries = result.scalars().all()
-    
-    if not entries:
+    """Get user history context for intent detection using new dual-database system"""
+    try:
+        # Try to get from user memory first (PostgreSQL)
+        from db.conversation_crud import UserMemoryCRUD
+        memory_crud = UserMemoryCRUD()
+        user_memory = await memory_crud.get_user_memory(db, user_id)
+        
+        if user_memory and user_memory.recent_moods:
+            recent_moods = user_memory.recent_moods[:limit]
+            avg_sentiment = user_memory.avg_sentiment or 0.0
+            return f"Recent moods: {', '.join(recent_moods)}, Average sentiment: {avg_sentiment:.2f}"
+        
+        # Fallback to legacy JournalEntry for backward compatibility
+        query = select(JournalEntry).where(
+            JournalEntry.user_id == user_id
+        ).order_by(desc(JournalEntry.timestamp)).limit(limit)
+        
+        result = await db.execute(query)
+        entries = result.scalars().all()
+        
+        if not entries:
+            return "No previous mood history available."
+        
+        recent_moods = [entry.mood for entry in entries if entry.mood]
+        if recent_moods:
+            avg_sentiment = sum(entry.sentiment_score for entry in entries if entry.sentiment_score) / len(entries)
+            return f"Recent moods: {', '.join(recent_moods)}, Average sentiment: {avg_sentiment:.2f}"
+        
         return "No previous mood history available."
-    
-    recent_moods = [entry.mood for entry in entries]
-    avg_sentiment = sum(entry.sentiment_score for entry in entries) / len(entries)
-    
-    return f"Recent moods: {', '.join(recent_moods)}, Average sentiment: {avg_sentiment:.2f}"
+        
+    except Exception as e:
+        print(f"Error getting user history context: {e}")
+        return "No previous mood history available."
 
 def detect_intent(message: str) -> str:
     """Legacy intent detection for backward compatibility"""

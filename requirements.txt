@@ -19,3 +19,5 @@ plotly
 scikit-learn
 datasets
 pandas
+motor
+pymongo

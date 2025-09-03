@@ -1,0 +1,29 @@
+{
+  "user_id": "test_user",
+  "session_id": "sample_session_001",
+  "messages": [
+    {
+      "role": "user",
+      "content": "I'm feeling anxious about my presentation tomorrow",
+      "timestamp": "2024-01-15T10:00:00Z"
+    },
+    {
+      "role": "assistant",
+      "content": "I understand that presentations can feel overwhelming. Let's work through this together. What specifically about the presentation is making you feel anxious?",
+      "timestamp": "2024-01-15T10:00:30Z",
+      "metadata": {
+        "mood": "anxious",
+        "sentiment_score": -0.3,
+        "intent": "mood_entry"
+      }
+    }
+  ],
+  "mood": "anxious",
+  "sentiment_score": -0.3,
+  "intent": "mood_entry",
+  "reflection_question": "What coping strategies have worked for you in similar situations?",
+  "progress_summary": "User is experiencing presentation anxiety, showing awareness of emotional state",
+  "progress_score": 0.6,
+  "created_at": "2024-01-15T10:00:00Z",
+  "updated_at": "2024-01-15T10:00:30Z"
+}

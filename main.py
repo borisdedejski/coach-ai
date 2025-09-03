@@ -2,12 +2,32 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
 from router import api_routers_v1, status
+from db.mongodb import mongodb_connection
 
 load_dotenv()
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifespan events"""
+    # Startup
+    print("🚀 Starting up...")
+    try:
+        await mongodb_connection.connect()
+        print("✅ MongoDB connected successfully")
+    except Exception as e:
+        print(f"❌ Failed to connect to MongoDB: {e}")
+        # Continue without MongoDB for now (graceful degradation)
+    
+    yield
+    
+    # Shutdown
+    print("🛑 Shutting down...")
+    await mongodb_connection.disconnect()
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
